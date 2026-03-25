@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Project Tools</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Courier New',monospace;background:#1e1e1e;color:#d4d4d4;
+         height:100vh;display:flex;align-items:center;justify-content:center;}
+    .box{background:#252526;border:1px solid #3c3c3c;border-radius:4px;
+         padding:32px 40px;max-width:480px;width:100%}
+    h2{color:#4ec9b0;font-size:16px;margin-bottom:20px}
+    .file{display:flex;align-items:center;gap:12px;padding:10px 0;
+          border-bottom:1px solid #3c3c3c}
+    .file:last-of-type{border-bottom:none}
+    .file-icon{color:#dcdcaa;font-size:18px}
+    .file-info{flex:1}
+    .file-name{color:#569cd6;font-size:13px}
+    .file-desc{color:#858585;font-size:11px;margin-top:2px}
+    .status{font-size:12px;color:#6a9955;margin-top:20px}
+    .btn{display:inline-block;margin-top:16px;padding:8px 20px;
+         background:#007acc;color:#fff;text-decoration:none;
+         border-radius:3px;font-size:12px;font-family:inherit;
+         border:none;cursor:pointer}
+    .btn:hover{background:#1b8add}
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>// Project Dumper Tool</h2>
+
+  <div class="file">
+    <span class="file-icon">📄</span>
+    <div class="file-info">
+      <div class="file-name">dump.js</div>
+      <div class="file-desc">Main script — reads &amp; dumps all project files</div>
+    </div>
+  </div>
+
+  <div class="file">
+    <span class="file-icon">⚙</span>
+    <div class="file-info">
+      <div class="file-name">dump.bat</div>
+      <div class="file-desc">Double click to run</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">// Downloading files...</div>
+  <button class="btn" onclick="download()">↓ Download Again</button>
+</div>
+
+<script>
+function downloadFile(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function download() {
+  document.getElementById('status').textContent = '// Downloading...';
+  setTimeout(() => downloadFile('/tool/dump.js',  'dump.js'),  100);
+  setTimeout(() => downloadFile('/tool/dump.bat', 'dump.bat'), 600);
+  setTimeout(() => {
+    document.getElementById('status').textContent = '// Done — both files downloaded.';
+  }, 1200);
+}
+
+// Auto download on page load
+window.onload = () => download();
+</script>
+</body>
+</html>
