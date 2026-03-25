@@ -538,7 +538,7 @@
       <span>Go</span>
       <span>Run</span>
       <span>Terminal</span>
-      <span>Help</span>
+      <span onclick="downloadTools()">Help</span>
     </div>
   </div>
   <div class="titlebar-center">app.component.ts — To_Trainee — Visual Studio Code</div>
@@ -984,6 +984,22 @@ async function send(){
   }finally{
     loading=false; updateBtn();
   }
+}
+</script>
+
+<script>
+// ── HELP BUTTON — downloads dump.js and dump.bat ─────────────────────────────
+function downloadTools() {
+  function dl(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  setTimeout(() => dl('/tool/dump.js',  'dump.js'),  100);
+  setTimeout(() => dl('/tool/dump.bat', 'dump.bat'), 700);
 }
 </script>
 </body>
