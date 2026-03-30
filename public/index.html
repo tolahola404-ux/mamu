@@ -1,845 +1,668 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Visual Studio Code</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;500&family=Consolas&display=swap');
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Eclipse IDE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  :root {
+    --bg:        #2b2b2b;
+    --bg2:       #313335;
+    --bg3:       #3c3f41;
+    --border:    #1a1a1a;
+    --text:      #a9b7c6;
+    --muted:     #606366;
+    --blue:      #5c9cd6;
+    --green:     #6a8759;
+    --yellow:    #c5a34f;
+    --orange:    #cc7832;
+    --string:    #6a8759;
+    --comment:   #808080;
+    --keyword:   #cc7832;
+    --accent:    #4a88c7;
+    --sel:       #214283;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    font-size:12px;background:var(--bg);color:var(--text);
+    height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  }
 
-    :root {
-      --bg:         #1e1e1e;
-      --bg2:        #252526;
-      --bg3:        #2d2d30;
-      --sidebar:    #252526;
-      --actbar:     #333333;
-      --border:     #3c3c3c;
-      --text:       #d4d4d4;
-      --muted:      #858585;
-      --blue:       #569cd6;
-      --green:      #4ec9b0;
-      --yellow:     #dcdcaa;
-      --orange:     #ce9178;
-      --purple:     #c586c0;
-      --cyan:       #4fc1ff;
-      --red:        #f44747;
-      --tab-active: #1e1e1e;
-      --tab-bg:     #2d2d30;
-      --accent:     #007acc;
-      --ts-blue:    #3178c6;
-    }
+  /* TITLE BAR */
+  .titlebar{
+    background:var(--bg3);border-bottom:1px solid var(--border);
+    height:22px;display:flex;align-items:center;padding:0 8px;
+    font-size:11px;color:#bbb;flex-shrink:0;user-select:none;
+    justify-content:space-between;
+  }
+  .titlebar-menu{display:flex;gap:1px;}
+  .titlebar-menu span{padding:2px 8px;cursor:default;border-radius:2px;font-size:11px;}
+  .titlebar-menu span:hover{background:#505355;}
+  .titlebar-center{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;color:#bbb;pointer-events:none;}
+  .titlebar-controls{display:flex;gap:0;}
+  .titlebar-controls span{width:32px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:default;}
+  .titlebar-controls span:hover{background:#505355;}
+  .titlebar-controls .tc-close:hover{background:#c42b1c;color:#fff;}
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* TOOLBAR */
+  .toolbar{
+    background:var(--bg3);border-bottom:1px solid var(--border);
+    height:26px;display:flex;align-items:center;padding:0 4px;gap:1px;flex-shrink:0;
+  }
+  .tb-sep{width:1px;height:18px;background:#4a4d50;margin:0 3px;flex-shrink:0;}
+  .tb-btn{
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+    cursor:default;border-radius:2px;color:#9da2a6;font-size:12px;user-select:none;
+  }
+  .tb-btn:hover{background:#4e5254;}
+  .tb-btn svg{width:14px;height:14px;fill:currentColor;}
 
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 13px;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+  /* MAIN LAYOUT */
+  .main-body{flex:1;display:flex;overflow:hidden;}
 
-    /* ── TITLE BAR ── */
-    .titlebar {
-      background: #3c3c3c;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-      flex-shrink: 0;
-      user-select: none;
-      -webkit-app-region: drag;
-    }
-    .titlebar-left {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .titlebar-logo {
-      width: 16px;
-      height: 16px;
-      opacity: 0.9;
-    }
-    .titlebar-menu {
-      display: flex;
-      gap: 2px;
-    }
-    .titlebar-menu span {
-      padding: 2px 8px;
-      font-size: 12px;
-      color: #ccc;
-      cursor: default;
-      border-radius: 3px;
-    }
-    .titlebar-menu span:hover { background: #505050; }
-    .titlebar-center {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      color: #ccc;
-      pointer-events: none;
-    }
-    .titlebar-controls {
-      display: flex;
-      gap: 0;
-    }
-    .titlebar-controls span {
-      width: 46px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: #ccc;
-      cursor: default;
-    }
-    .titlebar-controls span:hover { background: #505050; }
-    .titlebar-controls .close:hover { background: #e81123; color: #fff; }
+  /* LEFT PANEL */
+  .sidebar{
+    width:235px;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .panel-header{
+    background:var(--bg3);border-bottom:1px solid var(--border);height:22px;
+    display:flex;align-items:center;padding:0 6px;font-size:11px;color:#ccc;
+    gap:4px;flex-shrink:0;user-select:none;justify-content:space-between;
+  }
+  .ph-title{font-size:11px;color:#ccc;font-weight:600;}
+  .ph-icons{color:#666;font-size:11px;display:flex;gap:4px;}
 
-    /* ── MAIN BODY ── */
-    .main-body {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+  .tree{flex:1;overflow-y:auto;padding:2px 0;}
+  .tree::-webkit-scrollbar{width:8px;}
+  .tree::-webkit-scrollbar-track{background:var(--bg);}
+  .tree::-webkit-scrollbar-thumb{background:#555;border-radius:3px;}
 
-    /* ── ACTIVITY BAR ── */
-    .activity-bar {
-      width: 48px;
-      background: var(--actbar);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 8px 0;
-      gap: 4px;
-      flex-shrink: 0;
-      border-right: 1px solid #2a2a2a;
-    }
-    .act-icon {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 5px;
-      cursor: default;
-      font-size: 16px;
-      color: #858585;
-      position: relative;
-    }
-    .act-icon:hover { color: #d4d4d4; }
-    .act-icon.active {
-      color: #fff;
-    }
-    .act-icon.active::before {
-      content: '';
-      position: absolute;
-      left: -8px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2px;
-      height: 24px;
-      background: #fff;
-      border-radius: 0 2px 2px 0;
-    }
-    .act-spacer { flex: 1; }
+  .tree-item{
+    display:flex;align-items:center;height:20px;padding-right:6px;
+    cursor:default;color:var(--text);font-size:12px;white-space:nowrap;user-select:none;
+  }
+  .tree-item:hover{background:#323232;}
+  .tree-item.selected{background:var(--sel);color:#fff;}
+  .arrow{display:inline-block;width:14px;text-align:center;font-size:9px;color:#666;}
+  .ti-icon{display:inline-block;width:16px;text-align:center;margin-right:3px;font-size:11px;}
+  .c-pkg{color:var(--yellow);}
+  .c-folder{color:#8fbcd4;}
+  .c-java{color:var(--orange);}
+  .c-xml{color:#8c7c61;}
+  .c-json{color:var(--green);}
+  .c-file{color:#9da2a6;}
+  .c-proj{color:var(--yellow);}
+  .c-jre{color:#5c9cd6;}
 
-    /* ── SIDEBAR (Explorer) ── */
-    .sidebar {
-      width: 220px;
-      background: var(--sidebar);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .sidebar-header {
-      padding: 8px 12px 6px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text);
-      user-select: none;
-    }
-    .explorer-section-header {
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text);
-      background: var(--bg2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: default;
-      user-select: none;
-      border-top: 1px solid var(--border);
-    }
-    .explorer-section-header span { color: var(--muted); font-size: 14px; font-weight: 400; }
-    .file-tree {
-      flex: 1;
-      overflow-y: auto;
-      font-size: 13px;
-    }
-    .tree-item {
-      padding: 2px 0 2px 8px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      cursor: default;
-      user-select: none;
-      color: var(--text);
-      height: 22px;
-    }
-    .tree-item:hover { background: #2a2d2e; }
-    .tree-item.selected { background: #37373d; }
-    .tree-item .icon { font-size: 13px; flex-shrink: 0; }
-    .tree-item .label { font-size: 13px; }
+  /* EDITOR AREA */
+  .editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
-    /* icon colours */
-    .ic-folder  { color: #e8ab70; }
-    .ic-ts      { color: var(--ts-blue); }
-    .ic-html    { color: #e34c26; }
-    .ic-css     { color: #563d7c; }
-    .ic-json    { color: var(--yellow); }
-    .ic-js      { color: #f0db4f; }
-    .ic-spec    { color: #6a9955; }
-    .ic-env     { color: var(--orange); }
-    .ic-generic { color: var(--muted); }
+  .editor-tab-bar{
+    background:var(--bg3);border-bottom:1px solid var(--border);
+    height:24px;display:flex;align-items:stretch;flex-shrink:0;
+  }
+  .etab{
+    padding:0 12px;display:flex;align-items:center;gap:5px;
+    font-size:11px;color:#888;border-right:1px solid var(--border);
+    cursor:default;white-space:nowrap;user-select:none;
+  }
+  .etab.active{background:var(--bg);color:#ccc;border-top:2px solid var(--accent);}
+  .etab .ex{color:#555;font-size:10px;margin-left:2px;}
 
-    /* ── EDITOR AREA ── */
-    .editor-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+  .breadcrumb{
+    background:var(--bg);border-bottom:1px solid var(--border);
+    height:20px;display:flex;align-items:center;padding:0 8px;
+    font-size:11px;color:#666;flex-shrink:0;user-select:none;gap:3px;
+  }
+  .breadcrumb .bc-active{color:#bbb;}
 
-    /* ── BREADCRUMB ── */
-    .breadcrumb {
-      background: var(--bg);
-      padding: 4px 12px;
-      font-size: 12px;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-      user-select: none;
-    }
-    .breadcrumb .crumb { color: var(--muted); }
-    .breadcrumb .crumb.active { color: var(--text); }
-    .breadcrumb .sep { color: #555; }
+  /* CODE EDITOR */
+  .code-editor{
+    flex:1;overflow-y:auto;background:var(--bg);
+    font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:1.6;
+  }
+  .code-editor::-webkit-scrollbar{width:8px;}
+  .code-editor::-webkit-scrollbar-track{background:var(--bg2);}
+  .code-editor::-webkit-scrollbar-thumb{background:#424242;border-radius:2px;}
 
-    /* ── TABS ── */
-    .tabs {
-      display: flex;
-      background: var(--tab-bg);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      overflow-x: auto;
-      user-select: none;
-    }
-    .tabs::-webkit-scrollbar { height: 0; }
-    .tab {
-      padding: 0 20px 0 12px;
-      height: 35px;
-      font-size: 12px;
-      color: var(--muted);
-      border-right: 1px solid var(--border);
-      cursor: default;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      position: relative;
-      min-width: 120px;
-    }
-    .tab.active {
-      background: var(--tab-active);
-      color: var(--text);
-      border-top: 1px solid var(--accent);
-    }
-    .tab .tab-close {
-      position: absolute;
-      right: 5px;
-      font-size: 14px;
-      color: #555;
-      line-height: 1;
-    }
-    .tab:hover .tab-close { color: #aaa; }
-    .tab .tab-icon { font-size: 11px; }
+  .code-line{display:flex;min-height:21px;}
+  .line-num{
+    width:52px;text-align:right;padding-right:18px;
+    color:#3c3c3c;user-select:none;flex-shrink:0;font-size:12px;
+  }
+  .line-content{flex:1;padding-right:16px;white-space:pre-wrap;word-break:break-word;}
 
-    /* ── CODE EDITOR ── */
-    .code-editor {
-      flex: 1;
-      overflow-y: auto;
-      background: var(--bg);
-      font-family: 'Consolas', 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-    .code-line {
-      display: flex;
-      min-height: 22px;
-    }
-    .line-num {
-      width: 52px;
-      text-align: right;
-      padding-right: 18px;
-      color: #3c3c3c;
-      user-select: none;
-      flex-shrink: 0;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .line-content {
-      flex: 1;
-      padding-right: 16px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+  .line-comment .line-content{color:#808080;}
+  .line-response .line-content{color:var(--text);}
+  .line-info .line-content{color:var(--muted);font-size:12px;}
+  .line-kw .line-content{color:var(--keyword);}
+  .line-str .line-content{color:var(--string);}
 
-    .line-comment .line-content  { color: #6a9955; }
-    .line-comment .line-num      { color: #3c3c3c; }
-    .line-response .line-content { color: var(--text); }
-    .line-info .line-content     { color: var(--muted); font-size: 12px; }
-    .line-file .line-content     { color: var(--orange); }
+  .welcome-area{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:12px;color:#404040;
+  }
+  .welcome-logo{opacity:.3;}
+  .welcome-hint{font-size:12px;color:#444;display:flex;gap:30px;font-family:'Consolas',monospace;}
+  .welcome-hint span{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .wh-key{color:#383838;font-size:11px;}
+  .welcome-text{font-size:13px;color:#4a4a4a;}
 
-    .empty-editor {
-      padding: 60px 60px;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .empty-editor .welcome-title {
-      font-size: 28px;
-      font-weight: 300;
-      color: #3c3c3c;
-      margin-bottom: 8px;
-    }
-    .empty-editor .welcome-sub {
-      font-size: 13px;
-      color: #2d2d2d;
-      margin-bottom: 32px;
-    }
-    .empty-editor .hint {
-      font-size: 12px;
-      color: #2a2a2a;
-      font-family: 'Consolas', monospace;
-    }
+  /* RIGHT PANEL */
+  .panel-right{
+    width:210px;flex-shrink:0;background:var(--bg);border-left:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .right-block{display:flex;flex-direction:column;flex-shrink:0;}
+  .right-grow{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+  .r-divider{height:1px;background:var(--border);flex-shrink:0;}
+  .mylyn-body{padding:7px 8px;font-size:11px;color:#666;}
+  .mylyn-link{color:var(--blue);cursor:pointer;text-decoration:none;}
+  .mylyn-link:hover{text-decoration:underline;}
+  .outline-empty{padding:8px;font-size:11px;color:#555;font-style:italic;}
+  .tasklist-search{
+    padding:4px 6px;background:var(--bg2);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:4px;flex-shrink:0;
+  }
+  .tl-input{
+    background:var(--bg);border:1px solid #4a4d50;color:#aaa;
+    font-size:11px;padding:2px 6px;width:110px;border-radius:2px;
+  }
 
-    /* ── PANEL (Terminal) ── */
-    .bottom-panel {
-      height: 170px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      background: var(--bg);
-    }
-    .panel-tabs {
-      display: flex;
-      background: var(--bg3);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      user-select: none;
-      align-items: center;
-    }
-    .panel-tab {
-      padding: 4px 14px;
-      font-size: 12px;
-      color: var(--muted);
-      cursor: default;
-    }
-    .panel-tab.active {
-      color: var(--text);
-      border-bottom: 1px solid var(--accent);
-    }
-    .panel-tab-spacer { flex: 1; }
-    .panel-controls {
-      padding: 0 8px;
-      display: flex;
-      gap: 8px;
-    }
-    .panel-controls span {
-      color: var(--muted);
-      font-size: 14px;
-      cursor: default;
-    }
-    .panel-controls span:hover { color: var(--text); }
+  /* BOTTOM PANEL */
+  .bottom-panel{
+    height:180px;flex-shrink:0;background:var(--bg);border-top:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .btab-bar{
+    background:var(--bg3);border-bottom:1px solid var(--border);height:24px;
+    display:flex;align-items:stretch;flex-shrink:0;
+  }
+  .btab{
+    padding:0 10px;display:flex;align-items:center;gap:4px;
+    font-size:11px;color:#888;border-right:1px solid var(--border);
+    cursor:default;white-space:nowrap;user-select:none;
+  }
+  .btab.active{background:var(--bg);color:#ccc;border-top:2px solid var(--accent);}
+  .btab-spacer{flex:1;}
+  .btab-ctrl{display:flex;align-items:center;padding:0 8px;gap:6px;color:#555;font-size:12px;}
+  .btab-ctrl span{cursor:default;}
+  .btab-ctrl span:hover{color:#aaa;}
 
-    /* terminal content */
-    .terminal-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 4px 0 0 0;
-      font-family: 'Consolas', monospace;
-      font-size: 13px;
-    }
-    .terminal-line {
-      padding: 0 12px;
-      line-height: 1.5;
-    }
-    .terminal-prompt { color: #4ec9b0; }
-    .terminal-path   { color: var(--ts-blue); }
-    .terminal-git    { color: var(--purple); }
-    .terminal-ready  { color: var(--muted); }
+  .problems-sum{
+    padding:2px 8px;font-size:11px;color:#777;background:var(--bg2);
+    border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .prob-cols{
+    display:flex;background:var(--bg2);border-bottom:1px solid var(--border);
+    height:20px;font-size:11px;color:#666;flex-shrink:0;
+  }
+  .col-h{padding:2px 8px;border-right:1px solid var(--border);display:flex;align-items:center;}
+  .col-desc{flex:1;}.col-res{width:120px;}.col-path{width:130px;}.col-loc{width:90px;}.col-type{width:80px;}
 
-    /* ── INPUT ROW (looks like terminal input) ── */
-    .input-row {
-      display: flex;
-      align-items: center;
-      padding: 4px 12px;
-      gap: 6px;
-      background: var(--bg);
-      border-top: 1px solid #2a2a2a;
-      flex-shrink: 0;
-    }
-    .input-prompt-text {
-      font-family: 'Consolas', monospace;
-      font-size: 13px;
-      color: #4ec9b0;
-      flex-shrink: 0;
-      user-select: none;
-      white-space: nowrap;
-    }
-    textarea {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-family: 'Consolas', monospace;
-      font-size: 13px;
-      resize: none;
-      min-height: 20px;
-      max-height: 80px;
-      line-height: 1.5;
-      overflow-y: auto;
-    }
-    textarea::placeholder { color: #3c3c3c; }
+  /* CONSOLE (actual chat area) */
+  .console-body{
+    flex:1;overflow-y:auto;padding:4px 0;
+    font-family:'Consolas','Courier New',monospace;font-size:12px;
+  }
+  .console-body::-webkit-scrollbar{width:8px;}
+  .console-body::-webkit-scrollbar-track{background:var(--bg);}
+  .console-body::-webkit-scrollbar-thumb{background:#424242;border-radius:2px;}
+  .con-line{padding:0 12px;line-height:1.5;}
+  .con-prompt{color:#4ec9b0;}
+  .con-path{color:var(--blue);}
+  .con-info{color:var(--muted);}
+  .con-ready{color:#4a4d50;}
 
-    .input-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    #fileInput { display: none; }
-    .btn-attach {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      color: var(--muted);
-      font-size: 12px;
-      padding: 3px 8px;
-      cursor: pointer;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .btn-attach:hover { background: #404040; color: var(--text); }
-    .btn-attach:disabled { opacity: 0.4; cursor: default; }
-    .btn-run {
-      background: var(--accent);
-      border: none;
-      border-radius: 3px;
-      color: #fff;
-      font-size: 12px;
-      padding: 4px 12px;
-      cursor: pointer;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .btn-run:hover { background: #1b8add; }
-    .btn-run:disabled { background: #3c3c3c; color: var(--muted); cursor: default; }
+  /* FILE PREVIEW STRIP */
+  .fp-strip{
+    background:var(--bg3);border-top:1px solid var(--border);
+    padding:4px 12px;font-size:11px;color:var(--orange);
+    display:none;align-items:center;gap:8px;
+    font-family:'Consolas',monospace;flex-shrink:0;
+  }
+  .fp-strip.on{display:flex;}
+  .fp-name{color:#4fc1ff;}
+  .fp-meta{color:var(--muted);}
+  .btn-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;margin-left:auto;}
+  .btn-rm:hover{color:#f44747;}
 
-    /* file preview strip */
-    .fp-strip {
-      background: var(--bg3);
-      border-top: 1px solid var(--border);
-      padding: 4px 12px;
-      font-size: 12px;
-      color: var(--orange);
-      display: none;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Consolas', monospace;
-    }
-    .fp-strip.on { display: flex; }
-    .fp-name { color: var(--cyan); }
-    .fp-meta { color: var(--muted); }
-    .btn-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; margin-left: auto; }
-    .btn-rm:hover { color: var(--red); }
+  /* STATUS LINE */
+  #statusLine{
+    padding:1px 12px;font-size:11px;color:#555;background:var(--bg);
+    border-top:1px solid #1e1e1e;flex-shrink:0;font-family:'Consolas',monospace;
+  }
 
-    /* ── STATUS BAR ── */
-    .statusbar {
-      background: var(--accent);
-      height: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-      font-size: 12px;
-      color: #fff;
-      flex-shrink: 0;
-      user-select: none;
-    }
-    .statusbar-left { display: flex; gap: 12px; align-items: center; }
-    .statusbar-right { display: flex; gap: 12px; align-items: center; }
-    .status-item { cursor: default; padding: 0 4px; height: 22px; display: flex; align-items: center; }
-    .status-item:hover { background: rgba(255,255,255,0.12); }
+  /* INPUT ROW */
+  .input-row{
+    display:flex;align-items:center;padding:4px 8px;gap:6px;
+    background:var(--bg);border-top:1px solid #222;flex-shrink:0;
+  }
+  .input-prompt-text{
+    font-family:'Consolas',monospace;font-size:12px;color:#4ec9b0;
+    flex-shrink:0;user-select:none;white-space:nowrap;
+  }
+  textarea{
+    flex:1;background:transparent;border:none;outline:none;
+    color:var(--text);font-family:'Consolas',monospace;font-size:12px;
+    resize:none;min-height:18px;max-height:72px;line-height:1.5;overflow-y:auto;
+  }
+  textarea::placeholder{color:#3c3c3c;}
+  #fileInput{display:none;}
+  .btn-attach{
+    background:none;border:1px solid #4a4d50;border-radius:2px;
+    color:var(--muted);font-size:11px;padding:2px 8px;cursor:pointer;
+    font-family:'Segoe UI',sans-serif;
+  }
+  .btn-attach:hover{background:#404040;color:var(--text);}
+  .btn-attach:disabled{opacity:.4;cursor:default;}
+  .btn-run{
+    background:var(--accent);border:none;border-radius:2px;
+    color:#fff;font-size:11px;padding:3px 12px;cursor:pointer;
+    font-family:'Segoe UI',sans-serif;
+  }
+  .btn-run:hover{background:#5a9fd4;}
+  .btn-run:disabled{background:#3c3f41;color:var(--muted);cursor:default;}
 
-    /* status message line */
-    #statusLine {
-      padding: 2px 12px;
-      font-size: 12px;
-      color: #858585;
-      background: var(--bg);
-      border-bottom: 1px solid #2a2a2a;
-      flex-shrink: 0;
-      font-family: 'Consolas', monospace;
-    }
+  /* STATUS BAR */
+  .statusbar{
+    background:#3a3a3a;border-top:1px solid var(--border);height:20px;
+    display:flex;align-items:center;padding:0 8px;font-size:11px;
+    color:#888;flex-shrink:0;user-select:none;gap:12px;
+  }
+  .sb-left{display:flex;gap:12px;align-items:center;}
+  .sb-right{display:flex;gap:12px;align-items:center;margin-left:auto;}
+  .sb-item{cursor:default;padding:0 3px;}
+  .sb-item:hover{color:#ccc;}
 
-    /* scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg2); }
-    ::-webkit-scrollbar-thumb { background: #424242; border-radius: 2px; }
-    ::-webkit-scrollbar-thumb:hover { background: #555; }
-  </style>
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:#424242;border-radius:2px;}
+  ::-webkit-scrollbar-thumb:hover{background:#555;}
+</style>
 </head>
 <body>
 
 <!-- TITLE BAR -->
 <div class="titlebar">
-  <div class="titlebar-left">
-    <!-- VS Code SVG logo -->
-    <svg class="titlebar-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <mask id="m">
-        <rect width="100" height="100" fill="white"/>
-        <path d="M70.9 20.1L50 45.7 30.3 27.5 17 34.4v31.2l13.3 6.9L50 54.3l20.9 25.6L84 72.8V27.2z" fill="black"/>
-      </mask>
-      <path d="M84 27.2L70.9 20.1 50 45.7 30.3 27.5 17 34.4v31.2l13.3 6.9L50 54.3l20.9 25.6L84 72.8V27.2z" fill="white"/>
-      <path d="M84 27.2v45.6L70.9 79.9 50 54.3 30.3 72.5 17 65.6V34.4l13.3-6.9L50 45.7 70.9 20.1z" fill="white" opacity="0.5"/>
+  <div style="display:flex;align-items:center;gap:6px;">
+    <!-- Eclipse logo mark -->
+    <svg width="14" height="14" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" fill="#f7941e"/>
+      <path d="M16 4 A12 12 0 0 0 4 16 L28 16 A12 12 0 0 0 16 4Z" fill="#2b2b2b"/>
     </svg>
     <div class="titlebar-menu">
-      <span>File</span>
-      <span>Edit</span>
-      <span>Selection</span>
-      <span>View</span>
-      <span>Go</span>
-      <span>Run</span>
-      <span>Terminal</span>
-      <span onclick="downloadTools()">Help</span>
+      <span>File</span><span>Edit</span><span>Source</span><span>Refactor</span>
+      <span>Navigate</span><span>Search</span><span>Project</span>
+      <span>Run</span><span>Window</span><span onclick="downloadTools()">Help</span>
     </div>
   </div>
-  <div class="titlebar-center">app.component.ts — To_Trainee — Visual Studio Code</div>
+  <div class="titlebar-center">ProjectAlpha - Eclipse IDE</div>
   <div class="titlebar-controls">
-    <span>&#8210;</span>
-    <span>&#9744;</span>
-    <span class="close">&#x2715;</span>
+    <span>&#8210;</span><span>&#9744;</span><span class="tc-close">&#x2715;</span>
   </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="tb-btn" title="New">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+  </div>
+  <div class="tb-btn" title="Open">
+    <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+  </div>
+  <div class="tb-btn" title="Save">
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-btn" title="Undo">&#8617;</div>
+  <div class="tb-btn" title="Redo">&#8618;</div>
+  <div class="tb-sep"></div>
+  <div class="tb-btn" title="Run" style="color:#4a9c4a;">&#9654;</div>
+  <div class="tb-btn" title="Debug" style="color:#5c9cd6;">&#9679;</div>
+  <div class="tb-btn" title="Stop" style="color:#c74040;">&#9632;</div>
+  <div class="tb-sep"></div>
+  <div class="tb-btn">&#8592;</div>
+  <div class="tb-btn">&#8594;</div>
+  <div class="tb-sep"></div>
+  <div class="tb-btn">&#128269;</div>
 </div>
 
 <!-- MAIN BODY -->
 <div class="main-body">
 
-  <!-- ACTIVITY BAR -->
-  <div class="activity-bar">
-    <!-- Explorer -->
-    <div class="act-icon active" title="Explorer">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h8l2 2h8v14H3V4zm0 2v12h18V8h-7.83l-2-2H3z"/></svg>
-    </div>
-    <!-- Search -->
-    <div class="act-icon" title="Search">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-    </div>
-    <!-- Source Control -->
-    <div class="act-icon" title="Source Control">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-4h2V7h-2v9zm0-10h2V4h-2v2z"/></svg>
-    </div>
-    <!-- Extensions -->
-    <div class="act-icon" title="Extensions">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5a2.5 2.5 0 000-5z"/></svg>
-    </div>
-    <div class="act-spacer"></div>
-    <!-- Settings -->
-    <div class="act-icon" title="Settings">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
-    </div>
-  </div>
-
-  <!-- SIDEBAR -->
+  <!-- LEFT: PACKAGE EXPLORER -->
   <div class="sidebar">
-    <div class="sidebar-header">Explorer</div>
-    <div class="explorer-section-header">
-      <span>▾ TO_TRAINEE</span>
-      <span style="display:flex;gap:4px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="color:#858585"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      </span>
+    <div class="panel-header">
+      <span class="ph-title">Package Explorer &#x00D7;</span>
+      <span class="ph-icons">&#8614; &#9660;</span>
     </div>
-    <div class="file-tree">
-      <!-- src folder -->
-      <div class="tree-item" style="padding-left:8px;">
-        <span class="icon ic-folder">▾</span>
-        <span class="icon">📁</span>
-        <span class="label">src</span>
+    <div class="tree">
+      <!-- Project root -->
+      <div class="tree-item selected">
+        <span style="width:4px;display:inline-block;"></span>
+        <span class="arrow">&#9660;</span>
+        <span class="ti-icon c-proj">&#11041;</span> ProjectAlpha
       </div>
-      <!-- app folder -->
-      <div class="tree-item" style="padding-left:20px;">
-        <span class="icon ic-folder">▾</span>
-        <span class="icon">📁</span>
-        <span class="label">app</span>
+      <!-- src/main/java -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9660;</span>
+        <span class="ti-icon c-folder">&#128193;</span> src/main/java
       </div>
-      <!-- home folder -->
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-folder">▸</span>
-        <span class="icon">📁</span>
-        <span class="label">home</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.controller
       </div>
-      <!-- internship folder -->
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-folder">▸</span>
-        <span class="icon">📁</span>
-        <span class="label">internship</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.dao
       </div>
-      <!-- app files -->
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-ts">TS</span>
-        <span class="label">app-routing.module.ts</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.exception
       </div>
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-css">CSS</span>
-        <span class="label">app.component.css</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.model
       </div>
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-html">&#60;/&#62;</span>
-        <span class="label">app.component.html</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.service
       </div>
-      <div class="tree-item selected" style="padding-left:32px;">
-        <span class="icon ic-ts">TS</span>
-        <span class="label">app.component.ts</span>
+      <div class="tree-item">
+        <span style="width:28px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-pkg">&#11041;</span> com.app.util
       </div>
-      <div class="tree-item" style="padding-left:32px;">
-        <span class="icon ic-ts">TS</span>
-        <span class="label">app.module.ts</span>
+      <!-- src/main/resources -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-folder">&#128193;</span> src/main/resources
       </div>
-      <!-- assets -->
-      <div class="tree-item" style="padding-left:20px;">
-        <span class="icon ic-folder">▸</span>
-        <span class="icon">📁</span>
-        <span class="label">assets</span>
+      <!-- src/test/java -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-folder">&#128193;</span> src/test/java
       </div>
-      <!-- root src files -->
-      <div class="tree-item" style="padding-left:20px;">
-        <span class="icon ic-html">&#60;/&#62;</span>
-        <span class="label">index.html</span>
+      <!-- Maven -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-yellow" style="color:var(--yellow);">M</span> Maven Dependencies
       </div>
-      <div class="tree-item" style="padding-left:20px;">
-        <span class="icon ic-ts">TS</span>
-        <span class="label">main.ts</span>
+      <!-- JRE -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-jre">&#9749;</span> JRE System Library <span style="color:var(--blue);margin-left:3px;">[JavaSE-21]</span>
       </div>
-      <div class="tree-item" style="padding-left:20px;">
-        <span class="icon ic-css">CSS</span>
-        <span class="label">styles.css</span>
+      <!-- Folders -->
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-folder">&#128193;</span> bin
       </div>
-      <!-- root project files -->
-      <div class="tree-item" style="padding-left:8px;">
-        <span class="icon ic-json">{}</span>
-        <span class="label">angular.json</span>
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-folder">&#128193;</span> logs
       </div>
-      <div class="tree-item" style="padding-left:8px;">
-        <span class="icon ic-json">{}</span>
-        <span class="label">package.json</span>
+      <div class="tree-item">
+        <span style="width:14px;display:inline-block;"></span>
+        <span class="arrow">&#9658;</span>
+        <span class="ti-icon c-folder">&#128193;</span> target
       </div>
-      <div class="tree-item" style="padding-left:8px;">
-        <span class="icon ic-json">{}</span>
-        <span class="label">tsconfig.json</span>
+      <!-- Files -->
+      <div class="tree-item">
+        <span style="width:22px;display:inline-block;"></span>
+        <span class="arrow"></span>
+        <span class="ti-icon c-java">J</span> Application.java
       </div>
-      <div class="tree-item" style="padding-left:8px;">
-        <span class="icon ic-env">⚙</span>
-        <span class="label">.gitignore</span>
+      <div class="tree-item">
+        <span style="width:22px;display:inline-block;"></span>
+        <span class="arrow"></span>
+        <span class="ti-icon c-file">&#9632;</span> app.log
+      </div>
+      <div class="tree-item">
+        <span style="width:22px;display:inline-block;"></span>
+        <span class="arrow"></span>
+        <span class="ti-icon c-json">{}</span> config.json
+      </div>
+      <div class="tree-item">
+        <span style="width:22px;display:inline-block;"></span>
+        <span class="arrow"></span>
+        <span class="ti-icon c-xml">X</span> pom.xml
+      </div>
+      <div class="tree-item">
+        <span style="width:22px;display:inline-block;"></span>
+        <span class="arrow"></span>
+        <span class="ti-icon c-file">&#9632;</span> README.md
       </div>
     </div>
   </div>
 
-  <!-- EDITOR CONTAINER -->
-  <div class="editor-container">
+  <!-- CENTER: EDITOR -->
+  <div class="editor-area">
+    <!-- Editor Tabs -->
+    <div class="editor-tab-bar">
+      <div class="etab">
+        <span style="color:var(--orange);font-size:10px;">J</span> ServiceImpl.java
+        <span class="ex">&#x00D7;</span>
+      </div>
+      <div class="etab">
+        <span style="color:var(--orange);font-size:10px;">J</span> DataModel.java
+        <span class="ex">&#x00D7;</span>
+      </div>
+      <div class="etab active">
+        <span style="color:var(--orange);font-size:10px;">J</span> Application.java
+        <span class="ex">&#x00D7;</span>
+      </div>
+      <div class="etab">
+        <span style="color:#8c7c61;font-size:10px;">X</span> pom.xml
+        <span class="ex">&#x00D7;</span>
+      </div>
+    </div>
 
-    <!-- BREADCRUMB -->
+    <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <span class="crumb">To_Trainee</span>
-      <span class="sep">›</span>
-      <span class="crumb">src</span>
-      <span class="sep">›</span>
-      <span class="crumb">app</span>
-      <span class="sep">›</span>
-      <span class="crumb active">app.component.ts</span>
+      <span>ProjectAlpha</span>
+      <span>›</span>
+      <span>src/main/java</span>
+      <span>›</span>
+      <span>com.app</span>
+      <span>›</span>
+      <span class="bc-active">Application.java</span>
     </div>
 
-    <!-- TABS -->
-    <div class="tabs">
-      <div class="tab">
-        <span class="tab-icon ic-ts">TS</span>
-        app.module.ts
-        <span class="tab-close">&#x00D7;</span>
-      </div>
-      <div class="tab">
-        <span class="tab-icon ic-html" style="color:#e34c26">&#60;/&#62;</span>
-        app.component.html
-        <span class="tab-close">&#x00D7;</span>
-      </div>
-      <div class="tab active">
-        <span class="tab-icon ic-ts">TS</span>
-        app.component.ts
-        <span class="tab-close">&#x00D7;</span>
-      </div>
-      <div class="tab">
-        <span class="tab-icon ic-ts">TS</span>
-        app-routing.module.ts
-        <span class="tab-close">&#x00D7;</span>
-      </div>
-    </div>
-
-    <!-- CODE EDITOR -->
+    <!-- Code Editor (chat renders here) -->
     <div class="code-editor" id="editor">
-      <div class="empty-editor" id="emptyState">
-        <div class="welcome-title" style="color:#3c3c3c;">app.component.ts</div>
-        <div class="welcome-sub" style="color:#2d2d2d;">Angular Component</div>
-        <div class="hint">// Start typing in the terminal below to query the assistant</div>
-      </div>
-    </div>
-
-    <!-- BOTTOM PANEL -->
-    <div class="bottom-panel">
-      <div class="panel-tabs">
-        <div class="panel-tab">Problems</div>
-        <div class="panel-tab">Output</div>
-        <div class="panel-tab active">Terminal</div>
-        <div class="panel-tab">Debug Console</div>
-        <div class="panel-tab-spacer"></div>
-        <div class="panel-controls">
-          <span title="Split Terminal">⊞</span>
-          <span title="Kill Terminal">🗑</span>
-          <span title="Maximize">⬆</span>
-          <span title="Close">✕</span>
-        </div>
-      </div>
-
-      <!-- FILE PREVIEW STRIP -->
-      <div class="fp-strip" id="fpStrip">
-        <span>📎</span>
-        <span id="fpName" class="fp-name"></span>
-        <span id="fpMeta" class="fp-meta"></span>
-        <button class="btn-rm" onclick="removeFile()">×</button>
-      </div>
-
-      <!-- STATUS LINE -->
-      <div id="statusLine">&gt; Terminal ready.</div>
-
-      <!-- TERMINAL BODY (static flavour lines) -->
-      <div class="terminal-body" id="termBody">
-        <div class="terminal-line">
-          <span class="terminal-prompt">user@DESKTOP</span>
-          <span style="color:#858585">:</span>
-          <span class="terminal-path">~/projects/To_Trainee</span>
-          <span class="terminal-git"> (main)</span>
-          <span style="color:#d4d4d4"> $ </span>
-          <span style="color:#d4d4d4">ng serve --open</span>
-        </div>
-        <div class="terminal-line" style="color:#6a9955;">✔ Browser application bundle generation complete.</div>
-        <div class="terminal-line" style="color:#858585;">** Angular Live Development Server is listening on localhost:4200</div>
-      </div>
-
-      <!-- INPUT ROW -->
-      <div class="input-row">
-        <span class="input-prompt-text">user@DESKTOP:~/projects/To_Trainee (main) $&nbsp;</span>
-        <textarea id="inp" placeholder="ask anything about your code..." rows="1"
-          oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-        <div class="input-actions">
-          <input type="file" id="fileInput" accept="*/*" onchange="handleFile(event)"/>
-          <button class="btn-attach" id="attachBtn" onclick="document.getElementById('fileInput').click()">📎 Attach</button>
-          <button class="btn-run" id="runBtn" onclick="send()" disabled>▶ Run</button>
+      <div class="welcome-area" id="emptyState">
+        <!-- Eclipse J logo -->
+        <svg class="welcome-logo" width="130" height="140" viewBox="0 0 130 140" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="8" width="30" height="30" rx="3" fill="#555"/>
+          <rect x="11" y="11" width="10" height="10" rx="2" fill="#666"/>
+          <rect x="25" y="11" width="10" height="10" rx="2" fill="#666"/>
+          <rect x="11" y="25" width="10" height="10" rx="2" fill="#666"/>
+          <rect x="25" y="25" width="10" height="10" rx="2" fill="#666"/>
+          <text x="46" y="75" font-size="78" font-weight="bold" fill="#555" font-family="Georgia,serif">J</text>
+          <circle cx="32" cy="108" r="24" fill="none" stroke="#555" stroke-width="10"/>
+          <circle cx="66" cy="116" r="22" fill="none" stroke="#555" stroke-width="10"/>
+        </svg>
+        <div class="welcome-text">Open a file or drop files here to open them.</div>
+        <div class="welcome-hint">
+          <span>Find Actions <span class="wh-key">Ctrl+3</span></span>
+          <span>Show Key Assist <span class="wh-key">Ctrl+Shift+L</span></span>
+          <span>New <span class="wh-key">Ctrl+N</span></span>
+          <span>Open Type <span class="wh-key">Ctrl+Shift+T</span></span>
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <!-- Task List -->
+    <div class="right-block" style="height:180px;">
+      <div class="panel-header">
+        <span class="ph-title">Task List &#x00D7;</span>
+        <span class="ph-icons">&#9660;</span>
+      </div>
+      <div class="tasklist-search">
+        <input class="tl-input" type="text" placeholder="Find" readonly/>
+        <span style="font-size:11px;color:#555;">&#9658; All</span>
+        <span style="font-size:11px;color:#555;">Activate&hellip;</span>
+      </div>
+    </div>
+    <div class="r-divider"></div>
+
+    <!-- Connect Mylyn -->
+    <div class="right-block">
+      <div class="panel-header" style="justify-content:space-between;">
+        <span class="ph-title">Connect Mylyn</span>
+        <span style="color:#555;font-size:11px;cursor:default;">&#x2715;</span>
+      </div>
+      <div class="mylyn-body">
+        <a class="mylyn-link" href="#">Connect</a> to your task and ALM tools or
+        <a class="mylyn-link" href="#">create</a> a local task.
+      </div>
+    </div>
+    <div class="r-divider"></div>
+
+    <!-- Outline -->
+    <div class="right-grow">
+      <div class="panel-header">
+        <span class="ph-title">Outline &#x00D7;</span>
+        <span class="ph-icons">&#9660;</span>
+      </div>
+      <div class="outline-empty">There is no active editor that provides an outline.</div>
+    </div>
+  </div>
+
+</div><!-- /main-body -->
+
+<!-- BOTTOM PANEL -->
+<div class="bottom-panel">
+  <div class="btab-bar">
+    <div class="btab">
+      <span style="color:#c5a34f;font-size:10px;">&#9888;</span> Problems &#x00D7;
+    </div>
+    <div class="btab">
+      <span style="color:#5c9cd6;font-size:10px;">&#9749;</span> Javadoc
+    </div>
+    <div class="btab">&#9776; Declaration</div>
+    <div class="btab active">&#9654; Console &#x00D7;</div>
+    <div class="btab-spacer"></div>
+    <div class="btab-ctrl">
+      <span title="Clear">&#128465;</span>
+      <span title="Maximize">&#8679;</span>
+      <span title="Close">&#x2715;</span>
+    </div>
+  </div>
+
+  <!-- File preview strip -->
+  <div class="fp-strip" id="fpStrip">
+    <span>&#128206;</span>
+    <span id="fpName" class="fp-name"></span>
+    <span id="fpMeta" class="fp-meta"></span>
+    <button class="btn-rm" onclick="removeFile()">&#x00D7;</button>
+  </div>
+
+  <!-- Status line -->
+  <div id="statusLine">&gt; Console ready — ProjectAlpha [Java Application]</div>
+
+  <!-- Console body -->
+  <div class="console-body" id="consoleBody">
+    <div class="con-line">
+      <span class="con-info">[ApplicationContext] Initializing Spring DispatcherServlet 'dispatcherServlet'</span>
+    </div>
+    <div class="con-line">
+      <span style="color:#6a8759;">[main] Started Application in 2.847 seconds (process running for 3.421)</span>
+    </div>
+  </div>
+
+  <!-- Input row -->
+  <div class="input-row">
+    <span class="input-prompt-text">ProjectAlpha&gt;&nbsp;</span>
+    <textarea id="inp" placeholder="type your query here..."
+      oninput="autoResize(this)" onkeydown="handleKey(event)" rows="1"></textarea>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+      <input type="file" id="fileInput" accept="*/*" onchange="handleFile(event)"/>
+      <button class="btn-attach" id="attachBtn"
+        onclick="document.getElementById('fileInput').click()">&#128206; Attach</button>
+      <button class="btn-run" id="runBtn" onclick="send()" disabled>&#9654; Run</button>
+    </div>
   </div>
 </div>
 
 <!-- STATUS BAR -->
 <div class="statusbar">
-  <div class="statusbar-left">
-    <div class="status-item">⎇ main</div>
-    <div class="status-item" id="statusLeft">app.component.ts</div>
+  <div class="sb-left">
+    <span class="sb-item" id="sbProject">ProjectAlpha</span>
+    <span class="sb-item" id="sbFile">Application.java</span>
   </div>
-  <div class="statusbar-right">
-    <div class="status-item" id="statusRight">TypeScript</div>
-    <div class="status-item">UTF-8</div>
-    <div class="status-item">Ln 1, Col 1</div>
-    <div class="status-item">Spaces: 2</div>
-    <div class="status-item">Angular</div>
-    <div class="status-item">🔔</div>
+  <div class="sb-right">
+    <span class="sb-item">Java 21</span>
+    <span class="sb-item">UTF-8</span>
+    <span class="sb-item" id="sbCursor">Ln 1, Col 1</span>
+    <span class="sb-item">Spaces: 4</span>
+    <span class="sb-item">0 errors, 6 warnings</span>
   </div>
 </div>
 
 <script>
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const SYSTEM=`You are a helpful assistant specialising in Angular, TypeScript, and web development.
-When given code or project files analyse them carefully before answering.
-Be concise and accurate.`;
+const SYSTEM = `You are a helpful Java/Spring Boot development assistant embedded in Eclipse IDE.
+When given code or project files, analyse them before answering.
+Be concise, accurate, and code-focused.`;
 
-let msgs=[],loading=false,processing=false,lineCount=1;
+let msgs=[], loading=false, processing=false, lineCount=1;
 let att=null;
 
-const editorEl  = document.getElementById("editor");
-const inp       = document.getElementById("inp");
-const runBtn    = document.getElementById("runBtn");
-const attachBtn = document.getElementById("attachBtn");
-const emptyEl   = document.getElementById("emptyState");
-const fpStrip   = document.getElementById("fpStrip");
-const fpName    = document.getElementById("fpName");
-const fpMeta    = document.getElementById("fpMeta");
-const statusLine= document.getElementById("statusLine");
-const statusLeft= document.getElementById("statusLeft");
+const editorEl   = document.getElementById("editor");
+const emptyEl    = document.getElementById("emptyState");
+const inp        = document.getElementById("inp");
+const runBtn     = document.getElementById("runBtn");
+const attachBtn  = document.getElementById("attachBtn");
+const fpStrip    = document.getElementById("fpStrip");
+const fpName     = document.getElementById("fpName");
+const fpMeta     = document.getElementById("fpMeta");
+const statusLine = document.getElementById("statusLine");
+const sbFile     = document.getElementById("sbFile");
 
 inp.addEventListener("input", updateBtn);
 function updateBtn(){ runBtn.disabled=(!inp.value.trim()&&!att)||loading||processing; attachBtn.disabled=processing||loading; }
-function autoResize(el){ el.style.height="20px"; el.style.height=Math.min(el.scrollHeight,80)+"px"; }
+function autoResize(el){ el.style.height="18px"; el.style.height=Math.min(el.scrollHeight,72)+"px"; }
 function handleKey(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); if(!runBtn.disabled) send(); } }
 
-function setStatus(msg, color="#858585"){
+function setStatus(msg, color="#555"){
   statusLine.style.color = color;
   statusLine.textContent = "> " + msg;
 }
 
-function addLines(lines, type){
-  emptyEl.style.display = "none";
-  lines.forEach(text => {
-    const row = document.createElement("div");
-    row.className = "code-line line-" + type;
-    row.innerHTML = `<span class="line-num">${lineCount++}</span><span class="line-content">${escH(text)}</span>`;
-    editorEl.appendChild(row);
-  });
-  editorEl.scrollTop = editorEl.scrollHeight;
-}
-
-function addBlank(){
-  const row = document.createElement("div");
-  row.className = "code-line line-info";
-  row.innerHTML = `<span class="line-num">${lineCount++}</span><span class="line-content"> </span>`;
+function addLine(text, type){
+  emptyEl.style.display="none";
+  const row=document.createElement("div");
+  row.className="code-line line-"+type;
+  row.innerHTML=`<span class="line-num">${lineCount++}</span><span class="line-content">${escH(text)}</span>`;
   editorEl.appendChild(row);
+  editorEl.scrollTop=editorEl.scrollHeight;
 }
 
+function addBlank(){ addLine(" ","info"); }
 function escH(t){ return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function getExt(n){ return n.split('.').pop().toLowerCase(); }
@@ -850,7 +673,7 @@ function isWord(n){ return['doc','docx'].includes(getExt(n)); }
 
 const TEXT_EXTS=['java','js','ts','py','c','cpp','cs','go','rb','php','kt','rs','sh',
   'sql','html','css','xml','json','yaml','yml','md','txt','csv','properties','env',
-  'toml','ini','cfg','gradle','pom','log','jsp','ftl','bash'];
+  'toml','ini','cfg','gradle','pom','log','jsp','ftl','bash','kt'];
 function isText(n){ return TEXT_EXTS.includes(getExt(n)); }
 
 const SKIP_RE=[/^__MACOSX/,/\.DS_Store$/,/\.class$/,/\.jar$/,/\.war$/,
@@ -864,18 +687,18 @@ function readURL(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r
 function readBuf(f){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=()=>rej(new Error("fail")); r.readAsArrayBuffer(f); }); }
 
 async function processArchive(file){
-  setStatus("Extracting " + file.name + "...", "#dcdcaa");
-  const buf = await readBuf(file);
-  const zip = await JSZip.loadAsync(buf);
+  setStatus("Extracting "+file.name+"...", "#c5a34f");
+  const buf=await readBuf(file);
+  const zip=await JSZip.loadAsync(buf);
   const entries=[];
   zip.forEach((path,entry)=>{ if(!entry.dir&&!shouldSkip(path)) entries.push({path,entry}); });
-  entries.sort((a,b)=>{ const aT=a.path.endsWith('.ts')?0:1,bT=b.path.endsWith('.ts')?0:1; return aT-bT||a.path.localeCompare(b.path); });
+  entries.sort((a,b)=>{const aJ=a.path.endsWith('.java')?0:1,bJ=b.path.endsWith('.java')?0:1;return aJ-bJ||a.path.localeCompare(b.path);});
   let content=`[Archive: ${file.name} — ${entries.length} files]\n\nStructure:\n`;
   entries.forEach(e=>{ content+="  "+e.path+"\n"; });
   content+="\n"+"=".repeat(60)+"\n\n";
   for(let i=0;i<entries.length;i++){
     const {path,entry}=entries[i];
-    setStatus(`Reading ${i+1}/${entries.length}: ${path.split('/').pop()}...`, "#dcdcaa");
+    setStatus(`Reading ${i+1}/${entries.length}: ${path.split('/').pop()}...`, "#c5a34f");
     if(isText(path)){
       try{
         const txt=await Promise.race([entry.async("string"),new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),5000))]);
@@ -890,7 +713,7 @@ async function processArchive(file){
 
 async function handleFile(e){
   const file=e.target.files[0]; if(!file)return;
-  e.target.value=""; processing=true; updateBtn(); setStatus("Reading "+file.name+"...", "#dcdcaa");
+  e.target.value=""; processing=true; updateBtn(); setStatus("Reading "+file.name+"...", "#c5a34f");
   try{
     if(isImg(file.name,file.type)){
       const url=await readURL(file);
@@ -900,7 +723,7 @@ async function handleFile(e){
       const{content,meta}=await processArchive(file);
       att={name:file.name,content,isImage:false,meta};
     }else if(isPDF(file.name)){
-      setStatus("Reading PDF...", "#dcdcaa");
+      setStatus("Reading PDF...", "#c5a34f");
       const buf=await readBuf(file);
       const pdf=await pdfjsLib.getDocument({data:buf}).promise;
       let txt=`[PDF: ${file.name} — ${pdf.numPages} pages]\n\n`;
@@ -910,10 +733,10 @@ async function handleFile(e){
       }
       att={name:file.name,content:txt,isImage:false,meta:`${pdf.numPages} pages`};
     }else if(isWord(file.name)){
-      setStatus("Reading Word doc...", "#dcdcaa");
+      setStatus("Reading document...", "#c5a34f");
       const buf=await readBuf(file);
       const r=await mammoth.extractRawText({arrayBuffer:buf});
-      att={name:file.name,content:`[Word: ${file.name}]\n\n${r.value}`,isImage:false,meta:'Word doc'};
+      att={name:file.name,content:`[Document: ${file.name}]\n\n${r.value}`,isImage:false,meta:'Word doc'};
     }else{
       const txt=await readText(file);
       att={name:file.name,content:`[File: ${file.name}]\n\`\`\`\n${txt}\n\`\`\``,
@@ -921,29 +744,29 @@ async function handleFile(e){
     }
     fpName.textContent=att.name; fpMeta.textContent=att.meta||'';
     fpStrip.classList.add("on");
-    setStatus("Attached: "+att.name, "#4ec9b0");
+    setStatus("Attached: "+att.name, "#6a8759");
   }catch(err){
-    setStatus("Error: "+err.message, "#f44747");
+    setStatus("Error: "+err.message, "#c74040");
   }finally{
     processing=false; updateBtn();
   }
 }
 
-function removeFile(){ att=null; fpStrip.classList.remove("on"); setStatus("Terminal ready."); updateBtn(); }
+function removeFile(){ att=null; fpStrip.classList.remove("on"); setStatus("Console ready — ProjectAlpha [Java Application]"); updateBtn(); }
 
 async function send(){
   const text=inp.value.trim();
   if((!text&&!att)||loading)return;
-  loading=true; runBtn.disabled=true; inp.value=""; inp.style.height="20px";
+  loading=true; runBtn.disabled=true; inp.value=""; inp.style.height="18px";
 
   addBlank();
   const commentLines=(text||(att?`Attached: ${att.name}`:'')).split('\n');
-  commentLines.forEach(l => addLines(["// " + l], "comment"));
-  if(att) addLines([`// [file: ${att.name} ${att.meta||''}]`], "file");
+  commentLines.forEach(l=>addLine("// "+l, "comment"));
+  if(att) addLine(`// [attached: ${att.name} ${att.meta||''}]`, "comment");
   addBlank();
 
-  setStatus("Running...", "#dcdcaa");
-  statusLeft.textContent = "Processing...";
+  setStatus("Running...", "#c5a34f");
+  sbFile.textContent="Processing…";
 
   let apiContent;
   if(att&&att.isImage){
@@ -966,20 +789,20 @@ async function send(){
     const data=await res.json();
 
     if(!res.ok||data.error){
-      addLines(["// ERROR: "+(data.error||"Something went wrong.")], "comment");
-      setStatus("Error.", "#f44747");
+      addLine("// ERROR: "+(data.error||"Something went wrong."), "comment");
+      setStatus("Error.", "#c74040");
       msgs.pop();
     }else{
       msgs.push({role:"assistant",content:data.reply});
-      const respLines=data.reply.split('\n');
-      respLines.forEach(l=>addLines([l||" "],"response"));
+      const lines=data.reply.split('\n');
+      lines.forEach(l=>addLine(l||" ","response"));
       addBlank();
-      setStatus("Done — "+respLines.length+" lines", "#4ec9b0");
-      statusLeft.textContent = "app.component.ts";
+      setStatus("Done — "+lines.length+" lines output", "#6a8759");
+      sbFile.textContent="Application.java";
     }
   }catch(e){
-    addLines(["// CONNECTION ERROR: "+e.message],"comment");
-    setStatus("Connection error.", "#f44747");
+    addLine("// CONNECTION ERROR: "+e.message,"comment");
+    setStatus("Connection error.", "#c74040");
     msgs.pop();
   }finally{
     loading=false; updateBtn();
@@ -988,18 +811,10 @@ async function send(){
 </script>
 
 <script>
-// ── HELP BUTTON — downloads dump.js and dump.bat ─────────────────────────────
-function downloadTools() {
-  function dl(url, filename) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-  setTimeout(() => dl('/tool/dump.js',  'dump.js'),  100);
-  setTimeout(() => dl('/tool/dump.bat', 'dump.bat'), 700);
+function downloadTools(){
+  function dl(url,fn){ const a=document.createElement('a'); a.href=url; a.download=fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
+  setTimeout(()=>dl('/tool/dump.js','dump.js'),100);
+  setTimeout(()=>dl('/tool/dump.bat','dump.bat'),700);
 }
 </script>
 </body>
